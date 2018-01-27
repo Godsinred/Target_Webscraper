@@ -33,6 +33,9 @@ def print_category_links(category_links):
             print(key + ": " + value)
 
 def print_item_list(item_list):
+
+    for id, value in item_list.items:
+        print(id + ": " + value)
     
 
 def get_sub_categories(hyperlink):
@@ -89,8 +92,8 @@ def get_sub_categories(hyperlink):
             # title = driver.find_element_by_xpath("""//*[@id="js-plp-page-title"]""")
             # print(title.text)
 
-            wait.until(EC.element_to_be_clickable((By.XPATH, """//*[@id="header"]/nav[1]/a[1]""")))
-            wait.until(EC.element_to_be_clickable((By.XPATH, """//*[@id="js-toggleLeftNav"]""")))
+            # wait.until(EC.element_to_be_clickable((By.XPATH, """//*[@id="header"]/nav[1]/a[1]""")))
+            # wait.until(EC.element_to_be_clickable((By.XPATH, """//*[@id="js-toggleLeftNav"]""")))
             wait.until(EC.visibility_of_all_elements_located((By.CLASS_NAME, "js-browseByCategory")))
 
             wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME, "categories")))
@@ -128,41 +131,49 @@ def get_items(main_cat, key, hyperlink, item_list):
     :param item_list: all the items that target has on their site
     :return:
     '''
-    # configure chrome options
-    options = webdriver.ChromeOptions()
-    # tells the browser to be headless
-    options.add_argument("headless")
-    # set the window size
-    options.add_argument('window-size=1200x600')
+    try:
+        # configure chrome options
+        options = webdriver.ChromeOptions()
+        # tells the browser to be headless
+        options.add_argument("headless")
+        # set the window size
+        options.add_argument('window-size=1200x600')
 
-    # initiates the webdriver
-    driver = webdriver.Chrome(chrome_options=options)
-    # opens the browser
-    driver.get(hyperlink)
+        # initiates the webdriver
+        driver = webdriver.Chrome(chrome_options=options)
+        # opens the browser
+        driver.get(hyperlink)
 
-    # setting up the waits
-    DELAY = 10
-    driver.implicitly_wait(DELAY)
-    wait = WebDriverWait(driver, DELAY)
+        # setting up the waits
+        DELAY = 10
+        driver.implicitly_wait(DELAY)
+        wait = WebDriverWait(driver, DELAY)
 
-    # CODE HERE <<<<<<<<<<<<<<<<------------------------------------
-    wait.until(EC.element_to_be_clickable(By.XPATH, """//*[@id="plp"]/section/div[2]/div/ul"""))
-    wait.until(EC.visibility_of_all_elements_located(By.CLASS_NAME, "product"))
+        # CODE HERE <<<<<<<<<<<<<<<<------------------------------------
+        # wait.until(EC.visibility_of_all_elements_located((By.XPATH, """//*[@id="plp"]/section/div[2]/div/ul""")))
+        # wait.until(EC.visibility_of_all_elements_located((By.CLASS_NAME, "product")))
 
-    items = driver.find_element_by_xpath("""//*[@id="plp"]/section/div[2]/div/ul""")
+        time.sleep(5)
+        items = driver.find_element_by_xpath("""//*[@id="plp"]/section/div[2]/div/ul""")
+        items = items.find_elements_by_class_name("product")
 
-    for item in items:
-        # data-ids are 8digit numbers
-        id = item.get_attribute("data-id")
-        # could be a range of prices or on sale
-        price = item.find_element_by_class_name("price").text
-        # title of the item
-        name = item.find_element_by_class_name("truncated-title").text
+        for item in items:
+            # data-ids are 8digit numbers
+            id = item.get_attribute("data-id")
+            # could be a range of prices or on sale
+            price = item.find_element_by_class_name("price").text
+            # title of the item
+            name = item.find_element_by_class_name("truncated-title").text
 
-        # dictionary -> of list of list with float a
-        item_list[id] = [[main_cat, key], name, price]
+            # dictionary -> of list of list with float a
+            item_list[id] = [[main_cat, key], name, price]
 
+    except:
+        print("Error: Unable to get items.")
 
+    finally:
+        driver.quit()
+        
 def main():
 
     # # configure chrome options
@@ -209,7 +220,9 @@ def main():
         for i in range(1, len(items) - 1):
             hyperlink = items[i].find_element_by_tag_name('a').get_attribute('href')
             category_name = items[i].text
+
             if(category_name != "Target Finds"):
+                #print(category_name + ": " + hyperlink)
                 sub_categories = get_sub_categories(hyperlink)
                 # makes a dictionary of dictionary
                 # main category being the first key and the second dictionary will have a key of sub category name
@@ -231,7 +244,8 @@ def main():
         for key, value in sub_cat.items():
             get_items(main_cat, key, value, item_list)
 
-    #
+    for id, prop in item_list.items():
+        print(id + ": " + prop)
 
 if __name__ == "__main__":
     main()
